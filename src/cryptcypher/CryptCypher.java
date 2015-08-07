@@ -2,6 +2,7 @@ package cryptcypher;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileWriter;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.util.Arrays;
@@ -139,11 +140,82 @@ public class CryptCypher {
                         + String.format("%3.2f", 100 - (2 * Math.abs(
                                         (totalStrength / iterations) - 50))));
             }
+
+            {
+                final FileWriter f = new FileWriter(new File(
+                        "C:/CryptCypher/Cypher Output.txt"));
+                f.write("");
+                for (final int i : cypher) {
+                    int position = Integer.rotateRight(1, 1);
+                    for (int b = 0; b < Integer.BYTES; b++) {
+                        for (int iteration = 0; iteration < Byte.SIZE; iteration++) {
+                            if ((i & position) == 0) {
+                                f.append("0");
+                            } else {
+                                f.append("1");
+                            }
+                            position = Integer.rotateRight(position, 1);
+                            //Rotate to the next position.
+                        }
+                        f.append(" ");
+                    }
+                    f.append("\r\n");
+                }
+                f.close();
+            }
+
             System.out.println("\r\nDecyphertext:");
             final int[] decypher = decrypt(cypher, key);
             for (int i = 0; i < plain.length; i++) {
                 System.out.println(i + ":- " + decypher[i]
                         + " same as plaintext=" + (cPlain[i] == decypher[i]));
+            }
+
+            {
+                final FileWriter f = new FileWriter(new File(
+                        "C:/CryptCypher/Decyphered Output.txt"));
+                f.write("");
+                for (final int i : decypher) {
+                    int position = Integer.rotateRight(1, 1);
+                    for (int b = 0; b < Integer.BYTES; b++) {
+                        for (int iteration = 0; iteration < Byte.SIZE; iteration++) {
+                            if ((i & position) == 0) {
+                                f.append("0");
+                            } else {
+                                f.append("1");
+                            }
+                            position = Integer.rotateRight(position, 1);
+                            //Rotate to the next position.
+                        }
+                        f.append(" ");
+                    }
+                    f.append("\r\n");
+                }
+                f.close();
+            }
+
+            {
+                final FileWriter f = new FileWriter(new File(
+                        "C:/CryptCypher/Differential Output.txt"));
+                f.write("");
+                for (int i = 0; i < decypher.length; i++) {
+                    final int num = decypher[i] ^ cypher[i];
+                    int position = Integer.rotateRight(1, 1);
+                    for (int b = 0; b < Integer.BYTES; b++) {
+                        for (int iteration = 0; iteration < Byte.SIZE; iteration++) {
+                            if ((num & position) == 0) {
+                                f.append("0");
+                            } else {
+                                f.append("1");
+                            }
+                            position = Integer.rotateRight(position, 1);
+                            //Rotate to the next position.
+                        }
+                        f.append(" ");
+                    }
+                    f.append("\r\n");
+                }
+                f.close();
             }
         } while (true);
     }
@@ -234,8 +306,9 @@ public class CryptCypher {
             //and scrambled ints to return.
             for (int i = 0; i < cyphertext.length; i++) { //Scramble plaintext
                 //into cyphertext.
-                cyphertext[scramble[i]] = plaintext[i]; //Left shift the int
-                //by it's unscrambled index.
+                cyphertext[scramble[i]] = plaintext[i];
+                cyphertext[scramble[i]] = Integer.rotateLeft(
+                        cyphertext[scramble[i]], Math.floorMod(i, Integer.SIZE));
             }
             return cyphertext;
         }
@@ -282,10 +355,11 @@ public class CryptCypher {
             //this decryption.
             final int[] plaintext = new int[cyphertext.length]; //The decrypted
             //and unscrambled ints to return.
-            for (int i = 0; i < plaintext.length; i++) { //Unscramble cyphertext
-                //into plaintext.
-                plaintext[i] = cyphertext[scramble[i]]; //Right shift the int
-                //by it's unscrambled index.
+            for (int i = 0; i < plaintext.length; i++) { //Scramble plaintext
+                //into cyphertext.
+                cyphertext[scramble[i]] = Integer.rotateRight(
+                        cyphertext[scramble[i]], Math.floorMod(i, Integer.SIZE));
+                plaintext[i] = cyphertext[scramble[i]];
             }
 
             {
@@ -295,7 +369,7 @@ public class CryptCypher {
                     for (k = 0; k < key.length && index < plaintext.length; k++, index++) {
                         //Loop through each key.
                         plaintext[index] = plaintext[index] ^ key[k]; //Decrypt
-                        //the int.
+                        //the int with the key.
                     }
                 }
             }

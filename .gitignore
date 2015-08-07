@@ -50,6 +50,7 @@ Desktop.ini
 $RECYCLE.BIN/
 
 # Windows Installer files
+nbproject
 *.cab
 *.msi
 *.msm
