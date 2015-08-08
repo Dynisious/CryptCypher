@@ -237,7 +237,7 @@ public class CryptCypher {
         //indexes.
         Arrays.setAll(scrambled, (int operand) -> {
             return -1;
-        });
+        }); //Set all values in scrambled to -1 to represent unset positions.
         for (int index = 0; index < seed.length; index++) { //Scramble the order.
             int position = Math.floorMod(seed[index], seed.length); //The index
             //to locate this scrambled index in.
@@ -250,7 +250,7 @@ public class CryptCypher {
             }
             scrambled[position] = index; //Assign this index.
         }
-        return scrambled;
+        return scrambled; //Return the scrambled indexes.
     }
 
     /**
@@ -276,6 +276,7 @@ public class CryptCypher {
             throw new IndexOutOfBoundsException(
                     "No plaintext was given for encryption.");
         }
+
         {
             final int[] xOred = new int[plaintext.length]; //An array of the
             //xOred ints.
@@ -289,19 +290,20 @@ public class CryptCypher {
                         //Loop through each key.
                         xOred[index] = plaintext[index]
                                 ^ plaintext[index - 1] ^ key[k]; //Encrypt the
-                        //int with the key and the previous int..
+                        //int with the key and the previous unencrypted int.
                     }
                 }
             }
+
             int[] scramble = new int[plaintext.length]; //All indexes of
             //plaintext scrambled.
             {
-                int k; //The key to use.
+                int k; //The key to use as a base for the scrambled index.
                 for (int index = 0; index < plaintext.length;) { //Loop through
                     //each index in scramble.
                     for (k = 0; k < key.length && index < plaintext.length; k++) {
                         scramble[index] = key[k] / ++index; //Assign a value to
-                        //this index.
+                        //this index based off key.
                     }
                 }
             }
@@ -309,14 +311,18 @@ public class CryptCypher {
             //this encryption.
             final int[] cyphertext = new int[plaintext.length]; //The encrypted
             //and scrambled ints to return.
+            boolean invert = false; //When invert is true the int needs to be
+            //inverted.
             for (int i = 0; i < cyphertext.length; i++) { //Scramble plaintext
                 //into cyphertext.
-                cyphertext[scramble[i]] = (Math.floorMod(i, 2) == 1 ? -1 : 1)
-                        * xOred[i]; //Every second int gets inverted.
+                cyphertext[scramble[i]] = invert == false ? xOred[i]
+                        : -xOred[i]; //Every second int gets inverted.
+                invert = !invert; //Swith invert.
                 cyphertext[scramble[i]] = Integer.rotateLeft(
                         cyphertext[scramble[i]], Math.floorMod(i, Integer.SIZE));
                 //Each int is left shifted by it's index in plaintext.
             }
+
             return cyphertext;
         }
     }
@@ -360,16 +366,20 @@ public class CryptCypher {
             }
             scramble = scrambleIndexes(scramble); //Get the scramble setting for
             //this decryption.
+
             final int[] xOred = new int[cyphertext.length]; //The unscrambled
             //ints to decrypt.
+            boolean invert = false; //When invert is true the int needs to be
+            //inverted.
             for (int i = 0; i < xOred.length; i++) { //Uncramble cyphertext
                 //into xOred.
                 cyphertext[scramble[i]] = Integer.rotateRight(
                         cyphertext[scramble[i]], Math.floorMod(i, Integer.SIZE));
                 //Each int is right shifted by it's index in xOred.
-                xOred[i] = (Math.floorMod(i, 2) == 1 ? -1 : 1)
-                        * cyphertext[scramble[i]]; //Every second int gets
+                xOred[i] = invert == false ? cyphertext[scramble[i]]
+                        : -cyphertext[scramble[i]]; //Every second int gets
                 //inverted.
+                invert = !invert; //Switch invert.
             }
 
             final int[] plaintext = new int[cyphertext.length]; //The decrypted
@@ -384,7 +394,7 @@ public class CryptCypher {
                         //Loop through each key.
                         plaintext[index] = xOred[index]
                                 ^ plaintext[index - 1] ^ key[k]; //Decrypt the
-                        //int with the key and the previous int.
+                        //int with the key and the previous unencrypted int.
                     }
                 }
             }
